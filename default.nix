@@ -1,2 +1,2 @@
 with import <nixpkgs> {};
-callPackage ./blockchain.nix {}
+haskellPackages.callPackage ./blockchain.nix {}
