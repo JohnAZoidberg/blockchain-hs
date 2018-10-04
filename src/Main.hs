@@ -16,29 +16,45 @@ data BlockNumber = BlockNumber Integer -- uint64, min 2 chars
 instance Show BlockNumber where
     show (BlockNumber num) =  printf "%02d" num
 
-data Entry = Entry { index      :: BlockNumber
-                   , date       :: UTCTime
-                   , group_id   :: BlockNumber
-                   , process_id :: BlockNumber
-                   , content    :: Text -- UTF8, no ; or \n
-                   , hash       :: Digest SHA256 -- SHA256 over string representation
-                   }
+data Content =
+    Content { index      :: BlockNumber
+            , date       :: UTCTime
+            , group_id   :: BlockNumber
+            , process_id :: BlockNumber
+            , text       :: Text -- UTF8, no ; or \n
+            }
+
+data Entry =
+    Entry { content :: Content
+          , hash    :: Digest SHA256 -- SHA256 over string representation
+          }
 
 instance Show Entry where
-    show (Entry i d g p c h) =
+    show (Entry (Content i d g p t) h) =
                   show i
         ++ ";" ++ (formatTime defaultTimeLocale "%d.%m.%y-%H:%M:%S" d)
         ++ ";" ++ show g
         ++ ";" ++ show p
-        ++ ";" ++ unpack c
+        ++ ";" ++ unpack t
         ++ ";" ++ show h
 
-newEntry index date group_id process_id content = Entry {..}
-    where hash = Crypto.Hash.hash ("" :: ByteString)
+contentHash (Content i d g p t) = Crypto.Hash.hash ("" :: ByteString)
+
+newEntry content Nothing = Entry content (contentHash content)
+
+newEntry content (Just prev) = Entry content entryHash
+    where entryHash = Crypto.Hash.hash ("" :: ByteString)
 
 main :: IO ()
 main = do
     now <- getCurrentTime
-    let entry1 = show $ newEntry (BlockNumber 1) now (BlockNumber 1) (BlockNumber 1) "Foo"
-    print entry1
-    writeFile "foo.log" entry1
+
+    let entry1 = newEntry (Content (BlockNumber 1)
+                                   now
+                                   (BlockNumber 1)
+                                   (BlockNumber 1)
+                                   "Foo")
+                          Nothing
+
+    appendFile "foo.log" $ show entry1
+    appendFile "foo.log" "\n"
