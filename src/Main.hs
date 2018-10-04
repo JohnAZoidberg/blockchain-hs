@@ -38,6 +38,8 @@ instance Show Entry where
         ++ ";" ++ unpack t
         ++ ";" ++ show h
 
+type Chain = [Entry]
+
 contentHash (Content i d g p t) = Crypto.Hash.hash ("" :: ByteString)
 
 newEntry content Nothing = Entry content (contentHash content)
@@ -49,12 +51,12 @@ main :: IO ()
 main = do
     now <- getCurrentTime
 
-    let entry1 = newEntry (Content (BlockNumber 1)
+    let chain = [newEntry (Content (BlockNumber 1)
                                    now
                                    (BlockNumber 1)
                                    (BlockNumber 1)
                                    "Foo")
                           Nothing
+                ]
 
-    appendFile "foo.log" $ show entry1
-    appendFile "foo.log" "\n"
+    mapM_ (\entry -> appendFile "foo.log" $ show entry ++ "\n") chain
