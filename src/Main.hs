@@ -11,6 +11,7 @@ import           Data.ByteString    (ByteString)
 import           Data.Monoid        ((<>))
 import           Data.Text          (Text, pack, unpack, breakOnEnd, split)
 import qualified Data.Text          as T
+import           Data.Text.IO       as T (readFile)
 import           Data.Text.Encoding (encodeUtf8)
 import           Data.Text.Read     (decimal)
 import           Data.Time.Clock    (getCurrentTime, UTCTime)
@@ -108,19 +109,35 @@ mapWithPrev fun list = foo [] list
           foo (d:ds) (x:xs) = foo ((fun (Just d) x):d:ds) xs
           foo done [] = done
 
+-- TODO more efficient implementation
+readLastLine :: FilePath -> IO (Maybe Text)
+readLastLine = fmap mLast . fmap T.lines . T.readFile
+
+mCons :: Maybe a -> [a] -> [a]
+mCons Nothing list = list
+mCons (Just x) list = x:list
+
+mLast :: [a] -> Maybe a
+mLast [] = Nothing
+mLast list = Just $ last list
+
 main :: IO ()
 main = do
+    let logPath = "foo.log"
+
+    lastLine <- readLastLine logPath
+    let lastEntry = lastLine >>= loadEntry
     now <- getCurrentTime
 
-    let contents = [ Content 1 now 1 1 "Foo"
-                   , Content 1 now 1 1 "Foo"
-                   , Content 1 now 1 1 "Foo"
-                   , Content 1 now 1 1 "Foo"
+    let contents = (content <$> lastEntry) `mCons`
+                   [ Content 1 now 1 1 "Foo"
+                   --, Content 1 now 1 1 "Foo"
+                   --, Content 1 now 1 1 "Foo"
+                   --, Content 1 now 1 1 "Foo"
                    ]
-        chain :: Chain = mapWithPrev
+
+    let chain :: Chain = mapWithPrev
                   (\prev new -> newEntry new prev)
                   contents
 
-    mapM_ (\entry -> appendFile "foo.log" $ show entry ++ "\n") chain
-
-    print $ loadEntry "01;05.10.18-14:29:58;01;01;Foo;b03b87436b43ea829df836d195f1e42b52594104443edfbf1c1e9c98bebc6133"
+    mapM_ (\entry -> appendFile logPath $ show entry ++ "\n") chain
