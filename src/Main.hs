@@ -105,9 +105,9 @@ newEntry content (Just prev) =
       entryHash   = Crypto.Hash.hash $ prevHash <> (encodeUtf8 del) <> contentHash
 
 mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
-mapWithPrev fun list = foo [] list
+mapWithPrev fun list = reverse $ foo [] list
     where foo [] (x:xs) = foo [fun Nothing x] xs
-          foo (d:ds) (x:xs) = foo (d:ds ++ [fun (Just d) x]) xs
+          foo (d:ds) (x:xs) = foo ((fun (Just d) x):d:ds) xs
           foo done [] = done
 
 -- TODO more efficient implementation
