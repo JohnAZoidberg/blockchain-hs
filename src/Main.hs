@@ -17,6 +17,7 @@ import           Data.Text.Read     (decimal)
 import           Data.Time.Clock    (getCurrentTime, UTCTime)
 import           Data.Time.Format   (formatTime, parseTimeM, defaultTimeLocale)
 import           Text.Printf        (printf)
+import           System.Environment (getArgs)
 
 import           Crypto.Hash        (Digest, SHA256, digestFromByteString)
 import qualified Crypto.Hash        (hash)
@@ -123,7 +124,8 @@ mLast list = Just $ last list
 
 main :: IO ()
 main = do
-    let logPath = "foo.log"
+    -- Crashes if there no args were provided
+    logPath <- last <$> getArgs
 
     lastLine <- readLastLine logPath
     let lastEntry = lastLine >>= loadEntry
