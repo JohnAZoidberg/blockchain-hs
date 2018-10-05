@@ -4,7 +4,7 @@
 
 module Main where
 
-import           Data.ByteArray     (convert, append, ByteArray)
+import           Data.ByteArray     (convert)
 import qualified Data.ByteString.Base16 as Base16
 import           Data.Either.Combinators (rightToMaybe)
 import           Data.ByteString    (ByteString)
@@ -107,7 +107,7 @@ newEntry content (Just prev) =
 mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
 mapWithPrev fun list = foo [] list
     where foo [] (x:xs) = foo [fun Nothing x] xs
-          foo (d:ds) (x:xs) = foo ((fun (Just d) x):d:ds) xs
+          foo (d:ds) (x:xs) = foo (d:ds ++ [fun (Just d) x]) xs
           foo done [] = done
 
 -- TODO more efficient implementation
@@ -142,4 +142,5 @@ main = do
                   (\prev new -> newEntry new prev)
                   contents
 
-    mapM_ (\entry -> appendFile logPath $ show entry ++ "\n") chain
+    mapM_ (\entry -> appendFile logPath $ show entry ++ "\n")
+          (if length chain == 1 then chain else tail chain)
