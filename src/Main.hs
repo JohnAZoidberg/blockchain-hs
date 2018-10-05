@@ -22,9 +22,6 @@ import           System.Environment (getArgs)
 import           Crypto.Hash        (Digest, SHA256, digestFromByteString)
 import qualified Crypto.Hash        (hash)
 
--- TODO
--- convert every String to Text
--- use ByteArray instead of Digest SHA256 in Entry
 
 type BlockNumber = Integer -- uint64, min 2 chars
 
