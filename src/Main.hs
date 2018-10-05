@@ -5,21 +5,33 @@
 module Main where
 
 import           Data.ByteArray     (convert, append, ByteArray)
+import qualified Data.ByteString.Base16 as Base16
+import           Data.Either.Combinators (rightToMaybe)
 import           Data.ByteString    (ByteString)
 import           Data.Monoid        ((<>))
-import           Data.Text          (Text, pack, unpack)
+import           Data.Text          (Text, pack, unpack, breakOnEnd, split)
+import qualified Data.Text          as T
 import           Data.Text.Encoding (encodeUtf8)
+import           Data.Text.Read     (decimal)
 import           Data.Time.Clock    (getCurrentTime, UTCTime)
-import           Data.Time.Format   (formatTime, defaultTimeLocale)
+import           Data.Time.Format   (formatTime, parseTimeM, defaultTimeLocale)
 import           Text.Printf        (printf)
 
-import           Crypto.Hash        (Digest, SHA256)
+import           Crypto.Hash        (Digest, SHA256, digestFromByteString)
 import qualified Crypto.Hash        (hash)
+
+-- TODO
+-- convert every String to Text
+-- use ByteArray instead of Digest SHA256 in Entry
 
 type BlockNumber = Integer -- uint64, min 2 chars
 
 showBn :: BlockNumber -> String
 showBn num =  printf "%02d" num
+
+-- Delimiter between Content and Entry elements
+del :: Text
+del = ";"
 
 data Content =
     Content { index      :: BlockNumber
@@ -43,7 +55,38 @@ data Entry =
           }
 
 instance Show Entry where
-    show (Entry content h) = show content ++ ";" ++ show h
+    show (Entry content hash) = show content ++ ";" ++ show hash
+
+maybeTextInteger :: Text -> Maybe Integer
+maybeTextInteger txt = fst <$> (rightToMaybe $ decimal txt)
+
+-- TODO proper parser
+loadContent :: Text -> Maybe Content
+loadContent str = if valid
+                     then Content <$> index
+                                  <*> date
+                                  <*> group_id
+                                  <*> process_id
+                                  <*> Just text
+                     else Nothing
+    where entries = split (== ';') str
+          valid = length entries == 6
+               && T.all (/= '\n') text
+          (i:d:g:p:text:_semi:[]) = entries
+          index = maybeTextInteger i
+          date = parseTimeM False defaultTimeLocale "%d.%m.%y-%H:%M:%S"
+                          $ unpack d
+          group_id = maybeTextInteger g
+          process_id = maybeTextInteger p
+
+--loadHash :: Text -> Maybe (Digest a)
+loadHash = digestFromByteString . fst . Base16.decode . encodeUtf8
+
+loadEntry :: Text -> Maybe Entry
+loadEntry str = Entry <$> (loadContent contentStr)
+                      <*> (loadHash hashStr)
+    where (contentStr, hashStr) = breakOnEnd del str
+          -- TODO if either is empty should return Nothing
 
 type Chain = [Entry]
 
@@ -57,7 +100,7 @@ newEntry content (Just prev) =
   where
       prevHash    :: ByteString = convert $ hashContent content
       contentHash :: ByteString = convert $ hash prev
-      entryHash   = Crypto.Hash.hash $ prevHash <> (encodeUtf8 ";") <> contentHash
+      entryHash   = Crypto.Hash.hash $ prevHash <> (encodeUtf8 del) <> contentHash
 
 mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
 mapWithPrev fun list = foo [] list
@@ -79,3 +122,5 @@ main = do
                   contents
 
     mapM_ (\entry -> appendFile "foo.log" $ show entry ++ "\n") chain
+
+    print $ loadEntry "01;05.10.18-14:29:58;01;01;Foo;b03b87436b43ea829df836d195f1e42b52594104443edfbf1c1e9c98bebc6133"

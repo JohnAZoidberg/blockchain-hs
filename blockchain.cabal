@@ -17,6 +17,8 @@ executable blockchain
                      , bytestring
                      , time
                      , memory
+                     , either
+                     , base16-bytestring
   hs-source-dirs:      src
   default-language:    Haskell2010
 
