@@ -136,7 +136,7 @@ main = do
 
     let contents = (content <$> lastEntry) `mCons`
                    [ Content 1 now 1 1 "Foo"
-                   --, Content 1 now 1 1 "Foo"
+                   , Content 1 now 1 1 "Foo"
                    --, Content 1 now 1 1 "Foo"
                    --, Content 1 now 1 1 "Foo"
                    ]
@@ -146,4 +146,4 @@ main = do
                   contents
 
     mapM_ (\entry -> appendFile logPath $ show entry ++ "\n")
-          (if length chain == 1 then chain else tail chain)
+          (if isJust lastEntry then tail chain else chain)
