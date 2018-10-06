@@ -8,6 +8,7 @@ import           Data.ByteArray     (convert)
 import qualified Data.ByteString.Base16 as Base16
 import           Data.Either.Combinators (rightToMaybe)
 import           Data.ByteString    (ByteString)
+import           Data.Maybe         (isJust)
 import           Data.Monoid        ((<>))
 import           Data.Text          (Text, pack, unpack, breakOnEnd, split)
 import qualified Data.Text          as T
@@ -21,6 +22,8 @@ import           System.Environment (getArgs)
 
 import           Crypto.Hash        (Digest, SHA256, digestFromByteString)
 import qualified Crypto.Hash        (hash)
+
+import           System.IO.Unsafe   (unsafePerformIO)
 
 
 type BlockNumber = Integer -- uint64, min 2 chars
@@ -97,9 +100,12 @@ newEntry content Nothing = Entry content (hashContent content)
 newEntry content (Just prev) =
     Entry content entryHash
   where
-      prevHash    :: ByteString = convert $ hashContent content
-      contentHash :: ByteString = convert $ hash prev
-      entryHash   = Crypto.Hash.hash $ prevHash <> (encodeUtf8 del) <> contentHash
+      prevHashHex    = encodeUtf8 . pack . show $ hash prev
+      contentHashHex = encodeUtf8 . pack . show $ hashContent content
+      hashStr = unsafePerformIO $ do
+          print $ prevHashHex <> (encodeUtf8 del) <> contentHashHex
+          return $ prevHashHex <> (encodeUtf8 del) <> contentHashHex
+      entryHash = Crypto.Hash.hash $ hashStr
 
 mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
 mapWithPrev fun list = reverse $ foo [] list
