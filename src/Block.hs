@@ -5,6 +5,8 @@
 module Block
     ( newBlock
     , loadBlock
+    , validateChain
+    , validateBlock
     , Chain
     , Content(..)
     , Block(..)
@@ -24,6 +26,8 @@ import           Crypto.Hash        (Digest, SHA256, digestFromByteString)
 import qualified Crypto.Hash        (hash)
 
 import           System.IO.Unsafe   (unsafePerformIO)
+
+import           Util               (foldWithPrev)
 
 type BlockNumber = Integer -- uint64, min 2 chars
 type Chain = [Block]
@@ -97,16 +101,26 @@ hashContent content = unsafePerformIO $ do
         return contentHash
             where contentHash :: Digest SHA256 = Crypto.Hash.hash . encodeUtf8 . pack $ show content ++ ";"
 
+hashWithPrev :: Content -> Block -> Digest SHA256
+hashWithPrev content prev = Crypto.Hash.hash hashStr
+  where
+      prevHashHex = encodeUtf8 . pack . show $ hash prev
+      contentBytes = encodeUtf8 . pack . show $ content
+      hashStr = unsafePerformIO $ do
+          print  $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
+          return $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
 
 newBlock :: Content -> Maybe Block -> Block
-newBlock c Nothing = Block c (hashContent c)
-newBlock c (Just prev) =
-    Block incrementedContent entryHash
+newBlock c Nothing     = Block c (hashContent c)
+newBlock c (Just prev) = Block incrementedContent (hashWithPrev incrementedContent prev)
   where
       incrementedContent = c { index = (+1) . index $ content prev }
-      prevHashHex = encodeUtf8 . pack . show $ hash prev
-      contentBytes = encodeUtf8 . pack . show $ incrementedContent
-      hashStr = unsafePerformIO $ do
-          print $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
-          return $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
-      entryHash = Crypto.Hash.hash $ hashStr
+
+validateBlock :: Maybe Block -> Block -> Bool
+validateBlock Nothing     (Block content hash) = hash == hashContent content
+validateBlock (Just prev) (Block content hash) = hash == hashWithPrev content prev
+
+validateChain :: Chain -> Bool
+validateChain []     = True
+validateChain blocks =
+    foldWithPrev (\acc x y -> acc && validateBlock x y) True blocks
