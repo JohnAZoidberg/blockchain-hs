@@ -91,16 +91,22 @@ loadBlock str = Block <$> (loadContent contentStr)
           -- TODO if either is empty should return Nothing
 
 hashContent :: Content -> Digest SHA256
-hashContent content = Crypto.Hash.hash . encodeUtf8 . pack $ show content
+hashContent content = unsafePerformIO $ do
+        print $ show content
+        print contentHash
+        return contentHash
+            where contentHash :: Digest SHA256 = Crypto.Hash.hash . encodeUtf8 . pack $ show content ++ ";"
+
 
 newBlock :: Content -> Maybe Block -> Block
 newBlock c Nothing = Block c (hashContent c)
 newBlock c (Just prev) =
-    Block (c { index = (+1) . index $ content prev }) entryHash
+    Block incrementedContent entryHash
   where
-      prevHashHex    = encodeUtf8 . pack . show $ hash prev
-      contentBytes = encodeUtf8 . pack . show $ c
+      incrementedContent = c { index = (+1) . index $ content prev }
+      prevHashHex = encodeUtf8 . pack . show $ hash prev
+      contentBytes = encodeUtf8 . pack . show $ incrementedContent
       hashStr = unsafePerformIO $ do
-          print $ prevHashHex <> (encodeUtf8 del) <> contentBytes
-          return $ prevHashHex <> (encodeUtf8 del) <> contentBytes
+          print $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
+          return $ prevHashHex <> (encodeUtf8 del) <> contentBytes <> (encodeUtf8 del)
       entryHash = Crypto.Hash.hash $ hashStr
