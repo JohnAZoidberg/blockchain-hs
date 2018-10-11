@@ -101,10 +101,10 @@ newEntry content (Just prev) =
     Entry content entryHash
   where
       prevHashHex    = encodeUtf8 . pack . show $ hash prev
-      contentHashHex = encodeUtf8 . pack . show $ hashContent content
+      contentBytes = encodeUtf8 . pack . show $ content
       hashStr = unsafePerformIO $ do
-          print $ prevHashHex <> (encodeUtf8 del) <> contentHashHex
-          return $ prevHashHex <> (encodeUtf8 del) <> contentHashHex
+          print $ prevHashHex <> (encodeUtf8 del) <> contentBytes
+          return $ prevHashHex <> (encodeUtf8 del) <> contentBytes
       entryHash = Crypto.Hash.hash $ hashStr
 
 mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
