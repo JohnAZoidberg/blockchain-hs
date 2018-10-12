@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 
-module Block
+module Blockchain.Block
     ( newBlock
     , loadBlock
     , validateChain
@@ -27,7 +27,7 @@ import qualified Crypto.Hash        (hash)
 
 import           System.IO.Unsafe   (unsafePerformIO)
 
-import           Util               (foldWithPrev)
+import           Blockchain.Util    (foldWithPrev)
 
 type BlockNumber = Integer -- uint64, min 2 chars
 type Chain = [Block]

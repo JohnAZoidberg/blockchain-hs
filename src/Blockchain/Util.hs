@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 
-module Util
+module Blockchain.Util
     ( mCons
     , mLast
     , mapWithPrev

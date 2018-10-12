@@ -12,11 +12,11 @@ import           Data.Time.Clock    (getCurrentTime)
 import           Data.Time.Format   (parseTimeM, defaultTimeLocale)
 import           System.Environment (getArgs)
 
-import           Block              ( Chain, Content(..), Block(..)
+import           Blockchain.Block   ( Chain, Content(..), Block(..)
                                     , newBlock, loadBlock
                                     , validateChain, validateBlock
                                     )
-import           Util               (mapWithPrev, mCons, mLast)
+import           Blockchain.Util    (mapWithPrev, mCons, mLast)
 
 
 -- TODO more efficient implementation
