@@ -1,14 +1,19 @@
-{ mkDerivation, base, bytestring, cryptonite, either, memory
-, stdenv, text, time
+{ mkDerivation, base, base16-bytestring, bytestring, cryptonite
+, either, memory, stdenv, text, time
 }:
 mkDerivation {
-  pname = "blockchain";
+  pname = "blockchain-johnazoidberg";
   version = "0.1.0.0";
   src = ./.;
-  isLibrary = false;
+  isLibrary = true;
   isExecutable = true;
+  libraryHaskellDepends = [
+    base base16-bytestring bytestring cryptonite either memory text
+    time
+  ];
   executableHaskellDepends = [
-    base bytestring cryptonite either memory text time
+    base base16-bytestring bytestring cryptonite either memory text
+    time
   ];
   license = stdenv.lib.licenses.bsd3;
 }
