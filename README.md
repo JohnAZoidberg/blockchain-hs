@@ -1,5 +1,4 @@
 # Haskell Blockchain
-:wa
 
 A simple blockchain-like thing implemented in Haskell.
 

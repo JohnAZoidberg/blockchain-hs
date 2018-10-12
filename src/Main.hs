@@ -4,17 +4,20 @@
 
 module Main where
 
+import           Control.Monad      (when)
 import           Data.Maybe         (isJust, catMaybes)
 import           Data.Text          (Text)
 import qualified Data.Text          as T
 import           Data.Text.IO       as T (readFile)
 import           Data.Time.Clock    (getCurrentTime)
-import           Data.Time.Format   (parseTimeM, defaultTimeLocale)
+--import           Data.Time.Format   (parseTimeM, defaultTimeLocale)
 import           System.Environment (getArgs)
+import           System.Exit        (exitFailure)
+import           System.IO          (hPutStrLn, stderr)
 
 import           Blockchain.Block   ( Chain, Content(..), Block(..)
                                     , newBlock, loadBlock
-                                    , validateChain, validateBlock
+                                    , validateChain
                                     )
 import           Blockchain.Util    (mapWithPrev, mCons, mLast)
 
@@ -27,9 +30,9 @@ appendBlock :: String -> IO ()
 appendBlock filePath = do
     lastLine <- readLastLine filePath
     let lastBlock = lastLine >>= loadBlock
-    --now <- getCurrentTime
-    now <- parseTimeM False defaultTimeLocale "%d.%m.%y-%H:%M:%S"
-                          $ T.unpack "11.10.18-15:00:00"
+    now <- getCurrentTime
+    --now <- parseTimeM False defaultTimeLocale "%d.%m.%y-%H:%M:%S"
+    --                      $ T.unpack "11.10.18-15:00:00"
 
     let contents = (content <$> lastBlock) `mCons`
                    [ Content 1 now 1 1 "test"
@@ -47,13 +50,16 @@ appendBlock filePath = do
 
 checkBlocks :: FilePath -> IO ()
 checkBlocks filePath = do
-    lines <- T.lines <$> T.readFile filePath
-    print lines
-    let chain = catMaybes $ map loadBlock lines
+    blockLines <- T.lines <$> T.readFile filePath
+    let chain = catMaybes $ map loadBlock blockLines
 
-    print $ validateBlock (Just $ head chain) (head . tail $ chain)
-    print $ length chain
-    print $ validateChain chain
+    when (length chain /= length blockLines) $ do
+        hPutStrLn stderr "Couldn't parse all lines as blocks"
+        exitFailure
+
+    when (validateChain chain) $ do
+        hPutStrLn stderr "Block chain is not valid"
+        exitFailure
 
 main :: IO ()
 main = do
