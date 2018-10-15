@@ -7,6 +7,7 @@ module Blockchain.Block
     , loadBlock
     , validateChain
     , validateBlock
+    , validateTextChain
     , Chain
     , Content(..)
     , Block(..)
@@ -14,6 +15,7 @@ module Blockchain.Block
 
 import qualified Data.ByteString.Base16 as Base16
 import           Data.Either.Combinators (rightToMaybe)
+import           Data.Maybe         (catMaybes)
 import           Data.Text          (Text, pack, unpack, breakOnEnd, split)
 import qualified Data.Text          as T
 import           Data.Text.Encoding (encodeUtf8)
@@ -124,3 +126,12 @@ validateChain :: Chain -> Bool
 validateChain []     = True
 validateChain blocks =
     foldWithPrev (\acc x y -> acc && validateBlock x y) True blocks
+
+validateTextChain :: [Text] -> Either String ()
+validateTextChain blockLines
+  | (length chain /= length blockLines) =
+      Left "Couldn't parse all lines as blocks"
+  | (not $ validateChain chain) =
+      Left "Block chain is not valid"
+  | otherwise = Right ()
+  where chain = catMaybes $ map loadBlock blockLines

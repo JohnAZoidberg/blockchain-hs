@@ -1,12 +1,16 @@
-import Test.Tasty
-import Test.Tasty.SmallCheck as SC
-import Test.Tasty.QuickCheck as QC
-import Test.Tasty.HUnit
-import Test.QuickCheck.Modifiers
+import           Test.Tasty
+import           Test.Tasty.SmallCheck as SC
+import           Test.Tasty.QuickCheck as QC
+import           Test.Tasty.HUnit
+import           Test.QuickCheck.Modifiers
 
-import Data.List
-import Data.Ord
+import           Data.Either        (isRight)
+import           Data.List
+import           Data.Ord
+import qualified Data.Text          as T
+import           Data.Text.IO       as T (readFile)
 
+import Blockchain.Block
 import Blockchain.Util
 
 main = defaultMain tests
@@ -32,4 +36,9 @@ qcProps = testGroup "(checked by QuickCheck)"
 unitTests = testGroup "Unit tests"
   [ testCase "mLast on empty list returns Nothing" $
       mLast ([] :: [Int]) @?= Nothing
+  , testCase "mLast on empty list returns Nothing" $ do
+      blockLines <- T.lines <$> T.readFile "tests/block.chain"
+      case validateTextChain blockLines of
+        Left err -> assertFailure err
+        Right () -> return ()
   ]

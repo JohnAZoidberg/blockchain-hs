@@ -16,7 +16,7 @@ import           System.IO          (hPutStrLn, stderr)
 
 import           Blockchain.Block   ( Chain, Content(..)
                                     , newBlock, loadBlock
-                                    , validateChain
+                                    , validateChain, validateTextChain
                                     )
 import           Blockchain.Util    (mapWithPrev, mLast)
 
@@ -47,19 +47,10 @@ appendBlockCmd filePath = do
     mapM_ (\entry -> appendFile filePath $ show entry ++ "\n")
           (if isJust lastBlock then tail chain else chain)
 
-checkBlocks :: [Text] -> Either String ()
-checkBlocks blockLines
-  | (length chain /= length blockLines) =
-      Left "Couldn't parse all lines as blocks"
-  | (not $ validateChain chain) =
-      Left "Block chain is not valid"
-  | otherwise = Right ()
-  where chain = catMaybes $ map loadBlock blockLines
-
 checkBlocksCmd :: FilePath -> IO ExitCode
 checkBlocksCmd filePath = do
     blockLines <- T.lines <$> T.readFile filePath
-    case checkBlocks blockLines of
+    case validateTextChain blockLines of
       Left err -> do
           hPutStrLn stderr err
           return $ ExitFailure 1
