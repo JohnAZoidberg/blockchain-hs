@@ -12,7 +12,7 @@ import           Data.Text.IO       as T (readFile)
 import           Data.Time.Clock    (getCurrentTime)
 --import           Data.Time.Format   (parseTimeM, defaultTimeLocale)
 import           System.Environment (getArgs)
-import           System.Exit        (exitFailure)
+import           System.Exit        (exitWith, ExitCode(..))
 import           System.IO          (hPutStrLn, stderr)
 
 import           Blockchain.Block   ( Chain, Content(..), Block(..)
@@ -48,18 +48,24 @@ appendBlock filePath = do
     mapM_ (\entry -> appendFile filePath $ show entry ++ "\n")
           (if isJust lastBlock then tail chain else chain)
 
-checkBlocks :: FilePath -> IO ()
-checkBlocks filePath = do
+checkBlocks :: [Text] -> Either String ()
+checkBlocks blockLines
+  | (length chain /= length blockLines) =
+      Left "Couldn't parse all lines as blocks"
+  | (not $ validateChain chain) =
+      Left "Block chain is not valid"
+  | otherwise = Right ()
+  where chain = catMaybes $ map loadBlock blockLines
+
+checkBlocksCmd :: FilePath -> IO ExitCode
+checkBlocksCmd filePath = do
     blockLines <- T.lines <$> T.readFile filePath
-    let chain = catMaybes $ map loadBlock blockLines
-
-    when (length chain /= length blockLines) $ do
-        hPutStrLn stderr "Couldn't parse all lines as blocks"
-        exitFailure
-
-    when (validateChain chain) $ do
-        hPutStrLn stderr "Block chain is not valid"
-        exitFailure
+    case checkBlocks blockLines of
+      Left err -> do
+          hPutStrLn stderr err
+          return $ ExitFailure 1
+      Right () ->
+          return ExitSuccess
 
 main :: IO ()
 main = do
@@ -67,6 +73,6 @@ main = do
     args <- getArgs
 
     case args of
-      ("append":path:_xs) -> appendBlock path
-      ("check":path:_xs)  -> checkBlocks path
+      ("append":path:_xs) -> appendBlockCmd path
+      ("check":path:_xs)  -> checkBlocksCmd path >>= exitWith
       _                   -> undefined
