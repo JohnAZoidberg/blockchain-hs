@@ -12,10 +12,7 @@ mkDerivation {
     base base16-bytestring bytestring cryptonite either memory text
     time
   ];
-  executableHaskellDepends = [
-    base base16-bytestring bytestring cryptonite either memory text
-    time
-  ];
+  executableHaskellDepends = [ base text time ];
   testHaskellDepends = [
     base QuickCheck tasty tasty-hunit tasty-quickcheck tasty-smallcheck
   ];

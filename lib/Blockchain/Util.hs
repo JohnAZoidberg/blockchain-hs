@@ -6,6 +6,7 @@ module Blockchain.Util
     ( mCons
     , mLast
     , mapWithPrev
+    --, mapTailWithPrev
     , foldWithPrev
     ) where
 
@@ -22,6 +23,9 @@ mapWithPrev first fun list = reverse $ foo first list
     where foo [] (x:xs) = foo [fun Nothing x] xs
           foo (d:ds) (x:xs) = foo ((fun (Just d) x):d:ds) xs
           foo done [] = done
+
+--mapTailWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
+--mapTailWithPrev = head >>= mapWithPrev
 
 foldWithPrev :: (b -> Maybe a -> a -> b) -> b -> [a] -> b
 foldWithPrev _   default' []   = default'
