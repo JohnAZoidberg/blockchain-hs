@@ -1,2 +1,5 @@
 with import <nixpkgs> {};
-haskellPackages.callPackage ./blockchain.nix {}
+let
+  drv = haskellPackages.callPackage ./blockchain.nix {};
+in
+  if pkgs.lib.inNixShell then drv.env else drv
