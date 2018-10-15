@@ -17,8 +17,8 @@ mLast :: [a] -> Maybe a
 mLast [] = Nothing
 mLast list = Just $ last list
 
-mapWithPrev :: (Maybe b -> a -> b) -> [a] -> [b]
-mapWithPrev fun list = reverse $ foo [] list
+mapWithPrev :: [b] -> (Maybe b -> a -> b) -> [a] -> [b]
+mapWithPrev first fun list = reverse $ foo first list
     where foo [] (x:xs) = foo [fun Nothing x] xs
           foo (d:ds) (x:xs) = foo ((fun (Just d) x):d:ds) xs
           foo done [] = done
