@@ -14,7 +14,11 @@ $ cat block.chain
 01;05.10.18-16:30:17;01;01;Foo;8e25592f5f097b65a6b313ec0f2039121122d89067959dc1132e34d2d5ad0a5e
 ```
 
+## Test
+```
+cabal new-test
+```
+
 ## TODO
-- Write unit tests
 - Convert every String to Text
 - Use ByteArray instead of Digest SHA256 in Entry

@@ -5,7 +5,8 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, base16-bytestring, bytestring
-      , cryptonite, either, memory, stdenv, text, time
+      , cryptonite, either, memory, QuickCheck, stdenv, tasty
+      , tasty-hunit, tasty-quickcheck, tasty-smallcheck, text, time
       }:
       mkDerivation {
         pname = "blockchain-johnazoidberg";
@@ -20,6 +21,9 @@ let
         executableHaskellDepends = [
           base base16-bytestring bytestring cryptonite either memory text
           time
+        ];
+        testHaskellDepends = [
+          base QuickCheck tasty tasty-hunit tasty-quickcheck tasty-smallcheck
         ];
         license = stdenv.lib.licenses.bsd3;
       };
