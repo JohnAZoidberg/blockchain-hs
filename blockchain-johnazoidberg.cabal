@@ -5,7 +5,6 @@ license-file:        LICENSE
 author:              Daniel Schaefer
 maintainer:          git@danielschaefer.me
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
 
 test-Suite test
